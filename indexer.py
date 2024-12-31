@@ -32,7 +32,7 @@ def process_news_csv_large(file_path, num_barrels):
     for chunk in pd.read_csv(file_path, chunksize=barrel_size):
         for index, row in chunk.iterrows():
             doc_id = total_docs
-            text = row['headline_text']
+            text = row['Article text']
             words = tokenize(text)  # Use tokenized words for indexing
 
             # Update forward index
@@ -107,7 +107,7 @@ def process_news_csv_with_barrels(file_path, num_barrels):
         print("Lexicon and forward index already exist. Skipping processing.")
 
 if __name__ == "__main__":
-    file_path = "abcnews-date-text.csv"  # Input CSV file
+    file_path = "CNN_Articels_clean.csv"  # Input CSV file
     num_barrels = 10  # Number of barrels to create
 
     # Process and create barrels

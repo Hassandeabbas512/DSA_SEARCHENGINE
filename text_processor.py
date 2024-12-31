@@ -2,7 +2,7 @@ import re
 
 def tokenize(text):
     """Tokenize and normalize text"""
-    text = text.lower()  # Convert to lowercase
+    text = str(text).lower()  # Convert to lowercase
     text = re.sub(r'[^\w\s]', '', text)  # Remove punctuation
     tokens = text.split()  # Split into words
     return tokens

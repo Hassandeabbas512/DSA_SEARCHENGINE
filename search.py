@@ -46,37 +46,51 @@ def search_in_barrel(query_tokens, barrel, forward_index, total_docs):
 
 def search_engine_with_barrels(query, lexicon, forward_index, num_barrels=10):
     """Search across all barrels for the query."""
-    query_tokens = tokenize(query)
-    print(f"Tokenized Query: {query_tokens}")
+    try:
+        # Tokenize the query
+        query_tokens = tokenize(query)
+        if not query_tokens:
+            return [], {}, "Invalid query. Please provide valid search terms."
 
-    if not query_tokens:
-        return "Invalid query. Please provide valid search terms."
+        # Load barrels
+        barrels = load_barrels(num_barrels)
+        results = []
+        total_docs = len(forward_index)
 
-    barrels = load_barrels(num_barrels)
-    results = []
-    total_docs = len(forward_index)
-    print(f"Total documents in forward_index: {total_docs}")
+        # Search in all barrels
+        for barrel in barrels:
+            results.extend(search_in_barrel(query_tokens, barrel, forward_index, total_docs))
 
-    for i, barrel in enumerate(barrels):
-        print(f"Searching in barrel {i}...")
-        results.extend(search_in_barrel(query_tokens, barrel, forward_index, total_docs))
+        # Sort results by score in descending order
+        results = sorted(results, key=lambda x: x[1], reverse=True)
+        if not results:
+            return [], {}, "No results found."
 
-    results = sorted(results, key=lambda x: x[1], reverse=True)
-    print(f"Search Results: {results}")
+        # Prepare output and details
+        output = []
+        details = {}
+        for doc, score in results[:10]:  # Top 10 results
+            if str(doc) not in forward_index:
+                continue
 
-    if not results:
-        return "No results found."
+            # Generate preview and full article
+            preview = " ".join(forward_index[str(doc)][:50])
+            highlighted_preview = highlight_query_terms(preview, query_tokens)
+            full_article = " ".join(forward_index[str(doc)])
 
-    output = []
-    for doc, score in results[:10]:
-        if str(doc) not in forward_index:
-            print(f"Document {doc} not found in forward_index. Skipping.")
-            continue
-        preview = " ".join(forward_index[str(doc)][:50])  # Get document preview
-        highlighted_preview = highlight_query_terms(preview, query_tokens)
-        output.append(f"**Document {doc}** (Score: {score:.2f})\n{highlighted_preview}...\n")
+            output.append({
+                "Document": f"Document {doc}",
+                "Score": f"{score:.2f}",
+                "Preview": highlighted_preview,
+                "Full": full_article
+            })
+            details[f"Document {doc}"] = full_article
 
-    return "\n\n".join(output)
+        return output, details, ""
+
+    except Exception as e:
+        # Handle unexpected errors
+        return [], {}, f"An error occurred: {str(e)}"
 
 if __name__ == "__main__":
     query = input("Enter your search query: ").strip()
